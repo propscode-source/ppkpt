@@ -1,0 +1,21 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.vercel
+.vite
+
+# legacy/local files that should NOT ship to Vercel
+database.json
+uploads/
+exports/
+src.backup/
+server.backup.ts
+test-export.ts
+test-upload.ts
+fix.cjs
+supabase.ts

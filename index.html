@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PPKPT Fasilkom UNSRI</title>
+    <script>
+      // Safeguard against browser extensions or polyfills that lock window.fetch with only a getter.
+      // This prevents "Uncaught TypeError: Cannot set property fetch of #<Window> which has only a getter"
+      // when libraries (like React 19 or whatwg-fetch) try to polyfill it.
+      try {
+        const desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+        if (desc && desc.configurable) {
+          const originalFetch = desc.get ? desc.get.bind(window) : desc.value;
+          Object.defineProperty(window, 'fetch', {
+            get: function() { return originalFetch; },
+            set: function(val) {
+              console.warn("Attempt to override window.fetch ignored.", val);
+            },
+            configurable: true,
+            enumerable: desc.enumerable
+          });
+        }
+      } catch (e) {
+        console.error("Safeguard fetch error:", e);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
