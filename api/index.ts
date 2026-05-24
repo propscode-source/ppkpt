@@ -1,23 +1,23 @@
 import type { IncomingMessage, ServerResponse } from 'http';
+import { createApp } from '../lib/app.js';
 
-let appPromise: Promise<any> | null = null;
+let appInstance: ReturnType<typeof createApp> | null = null;
 let initError: Error | null = null;
 
-async function getApp() {
-  if (!appPromise) {
-    appPromise = (async () => {
-      const { createApp } = await import('../lib/app');
-      return createApp();
-    })().catch((err) => {
+function getApp() {
+  if (initError) throw initError;
+  if (!appInstance) {
+    try {
+      appInstance = createApp();
+    } catch (err) {
       initError = err as Error;
       throw err;
-    });
+    }
   }
-  return appPromise;
+  return appInstance;
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  // Debug endpoint that does NOT depend on Supabase / encryption
   if (req.url === '/api/debug' || req.url?.startsWith('/api/debug?')) {
     res.setHeader('content-type', 'application/json');
     res.end(
@@ -37,7 +37,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   try {
-    const app = await getApp();
+    const app = getApp();
     return app(req, res);
   } catch (err: any) {
     console.error('Function init/runtime error:', err);

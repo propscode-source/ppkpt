@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 dotenv.config();
 
-import { createApp } from './lib/app';
+import { createApp } from './lib/app.js';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';

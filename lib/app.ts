@@ -8,10 +8,10 @@ import crypto from 'crypto';
 import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
 
-import { supabase, EVIDENCE_BUCKET, DOCUMENTS_BUCKET, EXPORTS_BUCKET } from './supabase';
-import { encrypt, decrypt } from './encryption';
-import { uploadToStorage, downloadFromStorage, getSignedUrl } from './storage';
-import { hashPassword, verifyPassword } from './password';
+import { supabase, EVIDENCE_BUCKET, DOCUMENTS_BUCKET, EXPORTS_BUCKET } from './supabase.js';
+import { encrypt, decrypt } from './encryption.js';
+import { uploadToStorage, downloadFromStorage, getSignedUrl } from './storage.js';
+import { hashPassword, verifyPassword } from './password.js';
 
 let zipFormatRegistered = false;
 function ensureZipFormat() {
