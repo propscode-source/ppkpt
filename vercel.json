@@ -6,8 +6,7 @@
   "functions": {
     "api/index.ts": {
       "memory": 1024,
-      "maxDuration": 60,
-      "includeFiles": "lib/**"
+      "maxDuration": 60
     }
   },
   "rewrites": [
