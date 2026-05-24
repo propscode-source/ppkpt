@@ -1,11 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import archiver from 'archiver';
-// @ts-ignore - no types for archiver-zip-encrypted
-import zipEncrypted from 'archiver-zip-encrypted';
 import crypto from 'crypto';
-import PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
 
 import { supabase, EVIDENCE_BUCKET, DOCUMENTS_BUCKET, EXPORTS_BUCKET } from './supabase.js';
@@ -13,12 +9,21 @@ import { encrypt, decrypt } from './encryption.js';
 import { uploadToStorage, downloadFromStorage, getSignedUrl } from './storage.js';
 import { hashPassword, verifyPassword } from './password.js';
 
+// Heavy/optional libs (archiver, pdfkit) loaded lazily inside the export endpoint
+// to avoid breaking the entire function if these modules fail to resolve.
 let zipFormatRegistered = false;
-function ensureZipFormat() {
+async function loadZipLibs() {
+  const archiverMod: any = (await import('archiver')).default;
   if (!zipFormatRegistered) {
-    archiver.registerFormat('zip-encrypted', zipEncrypted);
+    const zipEnc: any = (await import('archiver-zip-encrypted')).default;
+    archiverMod.registerFormat('zip-encrypted', zipEnc);
     zipFormatRegistered = true;
   }
+  return archiverMod;
+}
+async function loadPdf() {
+  const mod: any = await import('pdfkit');
+  return mod.default || mod;
 }
 
 const DEFAULT_SETTINGS = {
@@ -387,7 +392,8 @@ export function createApp() {
   // ---- EXPORT ZIP ----
   app.post('/api/admin/reports/:id/export', async (req, res) => {
     try {
-      ensureZipFormat();
+      const archiver = await loadZipLibs();
+      const PDFDocument = await loadPdf();
       const { password, username } = req.body;
       const reportId = req.params.id;
 

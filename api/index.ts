@@ -1,24 +1,26 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { createApp } from '../lib/app.js';
 
-let appInstance: ReturnType<typeof createApp> | null = null;
-let initError: Error | null = null;
+let appPromise: Promise<any> | null = null;
 
-function getApp() {
-  if (initError) throw initError;
-  if (!appInstance) {
-    try {
-      appInstance = createApp();
-    } catch (err) {
-      initError = err as Error;
-      throw err;
-    }
+async function getApp() {
+  if (!appPromise) {
+    appPromise = (async () => {
+      const mod = await import('../lib/app.js');
+      return mod.createApp();
+    })();
   }
-  return appInstance;
+  return appPromise;
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  // Debug endpoint - does NOT load lib/app, so it works even if app crashes at init
   if (req.url === '/api/debug' || req.url?.startsWith('/api/debug?')) {
+    let importErr: any = null;
+    try {
+      await getApp();
+    } catch (e) {
+      importErr = e;
+    }
     res.setHeader('content-type', 'application/json');
     res.end(
       JSON.stringify({
@@ -29,15 +31,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
           SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
           ENCRYPTION_KEY: !!process.env.ENCRYPTION_KEY
         },
-        initError: initError ? { message: initError.message, stack: initError.stack } : null,
+        importError: importErr ? { message: importErr.message, stack: importErr.stack } : null,
         node: process.version
-      })
+      }, null, 2)
     );
     return;
   }
 
   try {
-    const app = getApp();
+    const app = await getApp();
     return app(req, res);
   } catch (err: any) {
     console.error('Function init/runtime error:', err);
